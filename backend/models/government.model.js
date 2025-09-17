@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const governmentSchema = new mongoose.Schema(
   {
-    departmentName: { type: String, required: true },
-    shortName: { type: String, required: true },
+    governmentName: { type: String, required: true, trim: true },
+    governmentShortName: { type: String, required: true, trim: true },
   },
   { timestamps: true }
 );

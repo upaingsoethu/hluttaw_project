@@ -123,15 +123,7 @@ export const CapitalizationUsername = (username) => {
   }
 };
 
-// tags validaton 
-export const tagsValidation = async (name, shortName) => {
-  if (!name || !shortName) {
-    const error = new Error("Name and ShortName fields are required!");
-    error.statusCode = 400;
-    throw error;
-  }
-  return true;
-}
+
 
 // mongoID validation
 export const mongoIdValidaton = async (id) => {
@@ -146,17 +138,57 @@ export const mongoIdValidaton = async (id) => {
 // committees validaton 
 export const committeeValidation = async (name, shortName) => {
   if (!name || !shortName) {
-    const error = new Error("Name and ShortName fields are required!");
+    const error = new Error("CommitteeName and Committee ShortName fields are required!");
     error.statusCode = 400;
     throw error;
   }
   return true;
 }
 
-// committees validaton 
+// election validaton 
 export const electionValidation = async (name, shortName) => {
   if (!name || !shortName) {
-    const error = new Error("Name and ShortName fields are required!");
+    const error = new Error("Election Name and Election ShortName fields are required!");
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+}
+
+// tags validaton 
+export const tagsValidation = async (name, shortName) => {
+  if (!name || !shortName) {
+    const error = new Error("Tag Name and Tag ShortName fields are required!");
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+}
+
+// government validaton 
+export const governmentValidation = async (name, shortName) => {
+  if (!name || !shortName) {
+    const error = new Error("Government Name and Government ShortName fields are required!");
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+}
+
+// government validaton 
+export const hluttawValidation = async (name, shortName) => {
+  if (!name || !shortName) {
+    const error = new Error("Hluttaw Time and Hluttaw ShortTime fields are required!");
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+}
+
+// law validaton 
+export const lawValidation = async (name, shortName) => {
+  if (!name || !shortName) {
+    const error = new Error("Hluttaw Time and Hluttaw ShortTime fields are required!");
     error.statusCode = 400;
     throw error;
   }

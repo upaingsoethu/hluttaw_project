@@ -2,14 +2,14 @@ import mongoose from "mongoose";
 
 const committeeSchema = new mongoose.Schema(
   {
-    name: {
+    committeeName: {
       type: String,
-      required: [true, "Committee name is required!"], // ✅ Custom message
+      required: true,
       trim: true,
     },
-    shortName: {
+    committeeShortName: {
       type: String,
-      required: [true, "Committee short name is required!"], // ✅ Custom message
+      required: true,
       trim: true,
     },
   },

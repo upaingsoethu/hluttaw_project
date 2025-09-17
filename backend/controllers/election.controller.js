@@ -6,7 +6,7 @@ import Election from "../models/election.model.js";
 
 export const electionsList = async (req, res) => {
   try {
-    const elections = await Election.find({}, "_id name shortName").sort({
+    const elections = await Election.find({}, "_id electionName electionShortName").sort({
       createdAt: -1,
     });
     if (elections.length === 0) {
@@ -30,9 +30,12 @@ export const electionsList = async (req, res) => {
 
 export const createElection = async (req, res) => {
   try {
-    const { name, shortName } = req.body;
-    await electionValidation(name, shortName);
-    const newElection = await Election.create({ name, shortName });
+    const { electionName, electionShortName } = req.body;
+    await electionValidation(electionName, electionShortName);
+    const newElection = await Election.create({
+      electionName,
+      electionShortName,
+    });
     res.status(201).json({
       status: true,
       message: "Election created successfully!",
@@ -50,7 +53,7 @@ export const createElection = async (req, res) => {
 
 export const updateElection = async (req, res) => {
   try {
-    const { name, shortName } = req.body;
+    const { electionName, electionShortName } = req.body;
     await mongoIdValidaton(req.params.id);
     const election = await Election.findById(req.params.id);
     if (!election) {
@@ -58,8 +61,8 @@ export const updateElection = async (req, res) => {
       error.statusCode = 400;
       throw error;
     }
-    election.name = name || election.name;
-    election.shortName = shortName || election.shortName;
+    election.electionName = electionName || election.electionName;
+    election.electionShortName = electionShortName || election.electionShortName;
 
     const updatedElection = await election.save();
 

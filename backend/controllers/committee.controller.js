@@ -5,7 +5,7 @@ import  Committee  from "../models/committee.model.js";
 export const committesList = async (req, res) => {
   try {
     const committees = await Committee
-      .find({}, "_id name shortName")
+      .find({}, "_id committeeName committeeShortName")
       .sort({ createdAt: -1 });
     if (committees.length === 0) {
       const error = new Error("No committees found!");
@@ -28,9 +28,12 @@ export const committesList = async (req, res) => {
 
 export const createCommittee = async (req, res) => {
   try {
-    const { name, shortName } = req.body;
-    await committeeValidation(name , shortName);
-    const newCommittee = await Committee.create({ name, shortName });
+    const { committeeName, committeeShortName } = req.body;
+    await committeeValidation(committeeName , committeeShortName);
+    const newCommittee = await Committee.create({
+      committeeName,
+      committeeShortName,
+    });
     res.status(201).json({
       status: true,
       message: "Committee created successfully!",
@@ -48,7 +51,7 @@ export const createCommittee = async (req, res) => {
 
 export const updateCommittee = async (req, res) => {
   try {
-    const { name, shortName } = req.body;
+    const { committeeName, committeeShortName } = req.body;
     await mongoIdValidaton(req.params.id);
     const committee = await Committee.findById(req.params.id);
     if (!committee) {
@@ -56,8 +59,9 @@ export const updateCommittee = async (req, res) => {
       error.statusCode = 400;
       throw error;
     }
-    committee.name = name || committee.name;
-    committee.shortName = shortName || committee.shortName;
+    committee.committeeName = committeeName || committee.committeeName;
+    committee.committeeShortName =
+      committeeShortName || committee.committeeShortName;
 
     const updatedCommittee = await committee.save();
 

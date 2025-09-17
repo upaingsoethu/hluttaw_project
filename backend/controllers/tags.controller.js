@@ -1,11 +1,11 @@
 import { tagsValidation, mongoIdValidaton } from "../helpers/validation.js";
-import Tag from "../models/tags.model.js";
+import Tag from "../models/tag.model.js";
 
 
 export const tagsList = async (req, res) => {
   try {
     const tagList = await Tag
-      .find({}, "_id name shortName")
+      .find({}, "_id tagName tagShortName")
       .sort({ createdAt: -1 });
     if (tagList.length === 0) {
       const error = new Error("No tags found!");
@@ -28,9 +28,9 @@ export const tagsList = async (req, res) => {
 
 export const createTag = async (req, res) => {
   try {
-    const { name, shortName } = req.body;
-    await tagsValidation(name, shortName);
-    const newTag = await Tag.create({ name, shortName });
+    const { tagName, tagShortName } = req.body;
+    await tagsValidation(tagName, tagShortName);
+    const newTag = await Tag.create({ tagName, tagShortName });
     res.status(201).json({
       status: true,
       message: "Tag created successfully!",
@@ -46,40 +46,19 @@ export const createTag = async (req, res) => {
   }
 };
 
-export const deleteTag = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await mongoIdValidaton(id);
-    const deletedTag = await Tag.findByIdAndDelete(id);
-    if (!deletedTag) {
-      const error = new Error("Tag not found!");
-      error.statusCode = 400;
-      throw error;
-    }
-    res
-      .status(200)
-      .json({ status: true, message: "Tag deleted successfully!" });
-  } catch (error) {
-    if (error.statusCode) {
-      throw error;
-    }
-    error.message = "Server Error in deleting tag!";
-    throw error;
-  }
-};
 export const updateTag = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, shortName } = req.body;
-    await mongoIdValidaton(id);
-    const tag = await Tag.findById(id);
+    const { tagName, tagShortName } = req.body;
+    await mongoIdValidaton(req.params.id);
+    const tag = await Tag.findById(req.params.id);
     if (!tag) {
       const error = new Error("Tag not found!");
       error.statusCode = 400;
       throw error;
     }
-    tag.name = name || tag.name;
-    tag.shortName = shortName || tag.shortName;
+
+    tag.tagName = tagName || tag.tagName;
+    tag.tagShortName = tagShortName || tag.tagShortName;
 
     const updatedTag = await tag.save();
 
@@ -96,3 +75,25 @@ export const updateTag = async (req, res) => {
     throw error;
   }
 };
+
+export const deleteTag = async (req, res) => {
+  try {
+    await mongoIdValidaton(req.params.id);
+    const deletedTag = await Tag.findByIdAndDelete(req.params.id);
+    if (!deletedTag) {
+      const error = new Error("Tag not found!");
+      error.statusCode = 400;
+      throw error;
+    }
+    res
+      .status(200)
+      .json({ status: true, message: "Tag deleted successfully!" });
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server Error in deleting tag!";
+    throw error;
+  }
+};
+

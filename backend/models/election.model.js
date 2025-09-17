@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const electionSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    shortName: { type: String, required: true },
+    electionName: { type: String, required: true, trim: true },
+    electionShortName: { type: String, required: true, trim: true },
   },
   { timestamps: true }
 );
