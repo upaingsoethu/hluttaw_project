@@ -10,13 +10,13 @@ export const governmentList = async (req, res) => {
       createdAt: -1,
     });
     if (governments.length === 0) {
-      const error = new Error("No governments found!");
+      const error = new Error("No governments data found!");
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Governments retrieved successfully!",
+      message: "Governments data retrieved successfully!",
       data: governments,
     });
   } catch (error) {

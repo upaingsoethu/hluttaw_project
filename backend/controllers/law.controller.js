@@ -1,179 +1,106 @@
 import Law from "../models/law.model.js";
-import mongoose from "mongoose";
-import path from "path";
-import fs from "fs";
+import { handleUpload } from "../helpers/upload.js"; // multer function-style
 
-// Helper: check valid MongoDB ObjectId
-
-
-// ----------------- CREATE LAW -----------------
+// ✅ Create Law (with file upload)
 export const createLaw = async (req, res) => {
   try {
-    const { lawNo, description, hluttawId } = req.body;
-    const file = req.file || null;
-
-    if (!lawNo || !description || !hluttawId ) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-    if (!isValidObjectId(hluttawId)) {
-      return res.status(400).json({ message: "Invalid hluttawId." });
-    }
-
-    const uploadedFile = file
-      ? {
-          fileName: file.originalname,
-          filePath: file.path,
-          fileSize: file.size,
-          fileType: file.mimetype,
-          downloadUrl: `${req.protocol}://${req.get(
-            "host"
-          )}/${file.path.replace(/\\/g, "/")}`,
-        }
-      : undefined;
-
-    const newLaw = new Law({
+    const file = await handleUpload(req, res); // multer function-style
+    const { lawNo, lawDescription, hluttawId } = req.body;
+    const downlaodLink = `${req.protocol}://${req.get(
+      "host"
+    )}/uploads/pdf/${file.filename}`;
+    const law = new Law({
       lawNo,
-      description,
-      hluttawId,
-      downloadUrl,
-      uploadedFile,
+      lawDescription,
+      hluttawId,  
+      downloadUrl: downlaodLink,
     });
 
-    const savedLaw = await newLaw.save();
-    res.status(201).json(savedLaw);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
+    await law.save();
+    res.status(201).json({
+      status: true,
+      message: "Law created successfully!",
+      data: law,
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-// ----------------- GET ALL LAWS -----------------
-export const getAllLaws = async (req, res) => {
+// ✅ Read All Laws
+export const LawsList = async (req, res) => {
   try {
-    const laws = await Law.find().populate("hluttawId", "name shortName");
-    res.status(200).json(laws);
+    const laws = await Law.find().populate("hluttawId").sort({
+      createdAt: -1,
+    });
+    if (laws.length === 0) {
+      const error = new Error("No Laws data found!");
+      error.statusCode = 404;
+      throw error;
+    }
+    res.status(200).json({
+      status: true,
+      message: "Laws data retrieved successfully!",
+      data: hluttaws,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server Error in fetching laws!";
+    throw error;
   }
 };
 
-// ----------------- GET SINGLE LAW -----------------
-export const getLawById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid law ID." });
-
-    const law = await Law.findById(id).populate("hluttawId", "name shortName");
-    if (!law) return res.status(404).json({ message: "Law not found." });
-
-    res.status(200).json(law);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
-  }
-};
-
-// ----------------- UPDATE LAW -----------------
+// ✅ Update Law (optionally with new file)
 export const updateLaw = async (req, res) => {
   try {
-    const { id } = req.params;
-    const {
-      lawNo,
-      description,
-      hluttawId,
-      downloadUrl,
-      downloadCount,
-      downloadRating,
-    } = req.body;
-    const file = req.file || null;
+    const law = await Law.findById(req.params.id);
+    if (!law) return res.status(404).json({ error: "Law not found" });
 
-    if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid law ID." });
-    if (hluttawId && !isValidObjectId(hluttawId))
-      return res.status(400).json({ message: "Invalid hluttawId." });
-
-    const updateData = {
-      lawNo,
-      description,
-      hluttawId,
-      downloadUrl,
-      downloadCount,
-      downloadRating,
-    };
+    let file = null;
+    try {
+      file = await handleUpload(req, res); // optional new file
+    } catch {}
 
     if (file) {
-      updateData.uploadedFile = {
-        fileName: file.originalname,
-        filePath: file.path,
-        fileSize: file.size,
-        fileType: file.mimetype,
-        downloadUrl: `${req.protocol}://${req.get("host")}/${file.path.replace(
-          /\\/g,
-          "/"
-        )}`,
-      };
+      // delete old file
+      if (fs.existsSync(law.downloadUrl)) fs.unlinkSync(law.downloadUrl);
+      law.downloadUrl = file.path;
     }
 
-    const updatedLaw = await Law.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedLaw) return res.status(404).json({ message: "Law not found." });
+    law.lawNo = req.body.lawNo || law.lawNo;
+    law.lawDescription = req.body.lawDescription || law.lawDescription;
+    law.hluttawId = req.body.hluttawId || law.hluttawId;
 
-    res.status(200).json(updatedLaw);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
+    await law.save();
+    res.json(law);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-// ----------------- DELETE LAW -----------------
+// ✅ Delete Law
 export const deleteLaw = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!isValidObjectId(id))
-      return res.status(400).json({ message: "Invalid law ID." });
+    const law = await Law.findById(req.params.id);
+    if (!law) return res.status(404).json({ error: "Law not found" });
 
-    const deletedLaw = await Law.findByIdAndDelete(id);
-    if (!deletedLaw) return res.status(404).json({ message: "Law not found." });
-
-    // Optional: delete uploaded file from server
-    if (deletedLaw.uploadedFile && deletedLaw.uploadedFile.filePath) {
-      const filePath = path.join(
-        process.cwd(),
-        deletedLaw.uploadedFile.filePath
-      );
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    res.status(200).json({ message: "Law deleted successfully." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
+    if (fs.existsSync(law.downloadUrl)) fs.unlinkSync(law.downloadUrl);
+    await law.deleteOne();
+    res.json({ message: "Law deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ----------------- DOWNLOAD LAW FILE -----------------
-export const downloadLawFile = async (req, res) => {
+// ✅ Read Single Law
+export const getLawById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const law = await Law.findById(id);
-    if (!law || !law.uploadedFile)
-      return res.status(404).json({ message: "File not found." });
-
-    // Increment downloadCount
-    law.downloadCount += 1;
-    await law.save();
-
-    const filePath = path.join(process.cwd(), law.uploadedFile.filePath);
-    if (!fs.existsSync(filePath))
-      return res.status(404).json({ message: "File not found on server." });
-
-    res.download(filePath, law.uploadedFile.fileName);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error." });
+    const law = await Law.findById(req.params.id).populate("hluttawId");
+    if (!law) return res.status(404).json({ error: "Law not found" });
+    res.json(law);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

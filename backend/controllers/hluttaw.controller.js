@@ -13,13 +13,13 @@ export const hluttawList = async (req, res) => {
       createdAt: -1,
     });
     if (hluttaws.length === 0) {
-      const error = new Error("No hluttaws found!");
+      const error = new Error("No hluttaws data found!");
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Hluttaws retrieved successfully!",
+      message: "Hluttaws data retrieved successfully!",
       data: hluttaws,
     });
   } catch (error) {

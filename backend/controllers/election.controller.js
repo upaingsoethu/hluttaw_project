@@ -10,13 +10,13 @@ export const electionsList = async (req, res) => {
       createdAt: -1,
     });
     if (elections.length === 0) {
-      const error = new Error("No elections found!");
+      const error = new Error("No elections data found!");
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Elections retrieved successfully!",
+      message: "Elections data retrieved successfully!",
       data: elections,
     });
   } catch (error) {

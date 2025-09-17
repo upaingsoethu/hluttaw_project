@@ -3,6 +3,7 @@ import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import path from "path";
 // error handlers modules
 import {
   routeErrorHandler,
@@ -15,6 +16,8 @@ import postRoute from "./routes/post.route.js";
 import tagRoute from "./routes/tag.route.js";
 import committeeRoute from "./routes/committee.route.js";
 import electionRoute from "./routes/election.route.js";
+import lawRoute from "./routes/law.route.js";
+import hluttawRoute from "./routes/hluttaw.route.js";
 
 import { CORS } from "./helpers/corsSites.js";
 // Load environment variables from .env file
@@ -33,6 +36,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for URL-encoded data
 app.use(cookieParser()); // Cookie parser middleware
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 
 // Basic route
@@ -45,10 +49,13 @@ app.get("/api", (req, res) => {
 //app.use("/api/auth/login", loginLimiter); // Apply stricter limit to login route
 
 app.use("/api/auth",  authRoute);   
-app.use("/api/posts", postRoute); 
-app.use("/api/tags", tagRoute); 
-app.use("/api/committees", committeeRoute); 
-app.use("/api/election-types", electionRoute); 
+app.use("/api/setting/tags", tagRoute); 
+app.use("/api/setting/committees", committeeRoute); 
+app.use("/api/setting/election-types", electionRoute); 
+app.use("/api/setting/hluttaws", hluttawRoute); 
+app.use("/api/data/laws", lawRoute); 
+app.use("/api/data/posts", postRoute); 
+
 
 
 //routes error handler 

@@ -8,13 +8,13 @@ export const committesList = async (req, res) => {
       .find({}, "_id committeeName committeeShortName")
       .sort({ createdAt: -1 });
     if (committees.length === 0) {
-      const error = new Error("No committees found!");
+      const error = new Error("No committees data found!");
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Committees retrieved successfully!",
+      message: "Committees data retrieved successfully!",
       data: committees,
     });
   } catch (error) {

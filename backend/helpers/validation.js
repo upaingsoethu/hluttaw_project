@@ -186,11 +186,13 @@ export const hluttawValidation = async (name, shortName) => {
 }
 
 // law validaton 
-export const lawValidation = async (name, shortName) => {
-  if (!name || !shortName) {
-    const error = new Error("Hluttaw Time and Hluttaw ShortTime fields are required!");
+export const lawValidation = async (lawNo, lawDescription, hluttawId) => {
+  if (!lawNo || !lawDescription || !hluttawId) {
+    const error = new Error(
+      "Law.No and Law Description and Hluttaw Time fields are required!"
+    );
     error.statusCode = 400;
     throw error;
   }
   return true;
-}
+};
