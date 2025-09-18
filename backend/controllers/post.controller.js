@@ -1,7 +1,7 @@
 import Post from "../models/post.model.js";
 import paginate from "../helpers/pagination.js";
-import { postValidation } from "../helpers/post.validation.js";
-import { handleUpload } from "../helpers/upload.js";
+import { postValidation } from "../helpers/validation.js";
+import { handlePostUpload } from "../helpers/upload.js";
 import moment from "moment/moment.js";
 import { mongoIdValidaton } from "../helpers/validation.js";
 moment.locale("my");
@@ -61,58 +61,62 @@ export const postsList = async (req, res) => {
 
 export const createPost = async (req, res) => {
   try {
-    const { title, content , tags , committeeId , hluttawId } = req.body;
-    const check = await postValidation(title, content ,  tags , committeeId , hluttawId);
-    if (check) {
-      // Step 2: Upload files after validation
-      const files = await handleUpload(req, res);
+    // 1️⃣ Upload first (req.body, req.files will be populated here)
+    const files = await handlePostUpload(req, res);
 
-      // Step 3: Extract file paths
-      const imagePaths = files.map((file) => file.path);
-      const newPost = new Post({
-        title,
-        content,
-        imageUrl: imagePaths,
-        tags,
-        committeeId,
-        author: req.user._id,
-      });
-      const post = await newPost.save();
-      await post.populate([
-        { path: "author", select: "username" },
-        { path: "committeeId", select: "name" },
-        { path: "tags", select: "name" },
-      ]);
-      res.status(201).json({
-        status: true,
-        message: "Create Post Successfully!",
-        data: [post].map((post) => ({
-          _id: post._id,
-          title: post.title,
-          content: post.content,
-          imageUrl: post.imageUrl.map((img) => img),
-          tags: post.tags.map((tag) => tag),
-          committeeId: post.committeeId,
-          author: post.author.username,
-          viewCount: post.viewCount,
-          rating: post.rating,
-          ratingCount: post.ratingCount,
-          createdAt: moment(post.createdAt).format("MMMM Do YYYY, h:mm:ss a"),
-          updatedAt: moment(post.updatedAt).format("MMMM Do YYYY, h:mm:ss a"),
-        })),
+    // 2️⃣ Now we can safely access req.body
+    const { title, content, tags, committeeId, hluttawId } = req.body;
+
+    if (!title || !content || !tags || !hluttawId) {
+      return res.status(400).json({
+        status: false,
+        message: "title, content, tags, hluttawId are required!",
       });
     }
-    const error = new Error("Post creation failed!");
-    error.statusCode = 400;
-    throw error;
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "At least one image is required!",
+      });
+    }
+
+    // 3️⃣ Map uploaded file paths
+    const imagePaths = files.map((file) => `/uploads/News/${file.filename}`);
+
+    // 4️⃣ Create post
+    const newPost = new Post({
+      title,
+      content,
+      imageUrl: imagePaths,
+      tags,
+      hluttawId,
+      committeeId: committeeId || null, // optional
+      author: req.user._id,
+    });
+
+    const post = await newPost.save();
+
+    await post.populate([
+      { path: "author", select: "username" },
+      { path: "committeeId", select: "name" },
+      { path: "tags", select: "name" },
+    ]);
+
+    return res.status(201).json({
+      status: true,
+      message: "Create Post Successfully!",
+      data: post,
+    });
   } catch (error) {
-    if (error.statusCode) {
-      throw error;
-    }
-    error.message = "Server Error in creating post!";
-    throw error;
+    console.error("Error creating post:", error);
+    return res.status(error.statusCode || 500).json({
+      status: false,
+      message: error.message || "Server Error in creating post!",
+    });
   }
 };
+
 
 export const detailPost = async (req, res) => {
   try {

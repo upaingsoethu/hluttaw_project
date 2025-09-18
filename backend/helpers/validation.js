@@ -135,6 +135,21 @@ export const mongoIdValidaton = async (id) => {
   return true;
 };
 
+export const postValidation = async (title, content, tags,  hluttawId) => {
+  if (!title || !content || !tags || !hluttawId) {
+    const error = new Error(
+      "title, content ,  tags , committeeId , hluttawId fields are required!"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+};
+
+
+
+
+
 // committees validaton 
 export const committeeValidation = async (name, shortName) => {
   if (!name || !shortName) {

@@ -12,7 +12,7 @@ const postSchema = new mongoose.Schema(
       required: true,
     },
     imageUrl:[
-      { type: String, required: true }
+      { type: String }
     ],
     author: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,18 +1,18 @@
 import Law from "../models/law.model.js";
-import { handleUpload } from "../helpers/upload.js"; // multer function-style
+import { handleLawUpload } from "../helpers/upload.js"; // multer function-style
 
 // ✅ Create Law (with file upload)
 export const createLaw = async (req, res) => {
   try {
-    const file = await handleUpload(req, res); // multer function-style
+    const file = await handleLawUpload(req, res); // multer function-style
     const { lawNo, lawDescription, hluttawId } = req.body;
-    const downlaodLink = `${req.protocol}://${req.get(
-      "host"
-    )}/uploads/pdf/${file.filename}`;
+    const downlaodLink = `/uploads/laws/${
+      req.file.filename
+    }`;
     const law = new Law({
       lawNo,
       lawDescription,
-      hluttawId,  
+      hluttawId,
       downloadUrl: downlaodLink,
     });
 
