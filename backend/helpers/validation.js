@@ -135,14 +135,15 @@ export const mongoIdValidaton = async (id) => {
   return true;
 };
 
-export const postValidation = async (title, content, tags,  hluttawId) => {
-  if (!title || !content || !tags || !hluttawId) {
+export const postValidation = async (title, content, tags,  hluttawId ) => {
+  if (!title || !content || !tags || !hluttawId ) {
     const error = new Error(
-      "title, content ,  tags , committeeId , hluttawId fields are required!"
+      "Title and Content and  Tags and Hluttaw fields are required!"
     );
     error.statusCode = 400;
     throw error;
   }
+  
   return true;
 };
 

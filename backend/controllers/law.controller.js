@@ -41,7 +41,7 @@ export const LawsList = async (req, res) => {
     res.status(200).json({
       status: true,
       message: "Laws data retrieved successfully!",
-      data: hluttaws,
+      data: laws,
     });
   } catch (error) {
     if (error.statusCode) {
