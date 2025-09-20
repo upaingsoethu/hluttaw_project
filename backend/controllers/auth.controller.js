@@ -87,12 +87,14 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     await loginValidation(email, password);
+
     const user = await User.login(email, password);
 
     const accessToken = await generateAccessToken(user._id);
     const refreshToken = await generateRefreshToken(user._id);
 
-    user.status = "active";
+    // Update user login info
+    user.account_status = "active";
     user.loginAt = new Date();
     user.refreshToken = refreshToken;
     await user.save();
@@ -103,23 +105,24 @@ export const loginUser = async (req, res) => {
 
     res.status(200).json({
       status: true,
-      message: "Login successful!",
+      message: "User logged in successfully!",
       data: {
         id: user._id,
         username: user.username,
         email: user.email,
-        role: user.roles,
-        status: user.account_status,
-        access_token: accessToken,
+        roles: user.roles,
+        account_status: user.account_status,
         refresh_token: refreshToken,
+        access_token: accessToken,
       },
     });
   } catch (error) {
-    if (error.statusCode) {
-      throw error;
-    }
-    error.message = "Server Error in user login!";
-    throw error;
+    res
+      .status(error.statusCode || 500)
+      .json({
+        status: false,
+        message: error.message || "Server Error in user login!",
+      });
   }
 };
 

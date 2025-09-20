@@ -4,6 +4,8 @@ import {
   CapitalizationUsername,
   emailValidation,
   passwordValidation,
+  registerValidation,
+  loginValidation
 } from "../helpers/validation.js";
 
 const userSchema = new mongoose.Schema(
@@ -82,7 +84,7 @@ userSchema.statics.register = async function (username, email, password) {
 userSchema.statics.login = async function (email, password) {
   //Validation check email and password
 
-  const user = await this.findOne({ email }).select("+ password");
+  const user = await this.findOne({ email }).select("+password");
   if (!user) {
     const error = new Error("Incorrect email!");
     error.statusCode = 404;

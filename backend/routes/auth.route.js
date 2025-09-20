@@ -20,9 +20,9 @@ router.get("/users", userList);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", checkAuth, logoutUser);
-router.patch("/chang-password", checkAuth, changePassword);
+router.patch("/change-password", checkAuth, changePassword);
 router.patch("/user/:id", updateUser);
-router.delete("/:id", deleteUser);
+router.delete("/user/:id", deleteUser);
 router.get("/refreshAccessToken", checkRefreshToken, accessTokenGenerated);
 
 export default router;
