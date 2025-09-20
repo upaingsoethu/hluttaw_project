@@ -1,21 +1,14 @@
-// libraries
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
-
-// helpers
 import {
   CapitalizationUsername,
-  registerValidation,
+  emailValidation,
+  passwordValidation,
 } from "../helpers/validation.js";
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    username: { type: String, required: true, trim: true },
     email: {
       type: String,
       required: true,
@@ -23,52 +16,40 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    password: {
-      type: String,
-      required: true,
-      minlength: 6,
-      select: false, // Exclude password field by default when querying
-    },
-    profileImage: { type: String, required: false },
+    password: { type: String, required: true, minlength: 6, select: false },
+    profile: { type: String, required: false, default: null },
     roles: {
       type: String,
       enum: ["user", "admin", "super_admin"],
       default: "user",
     },
-    account_status: {
+    status: {
       type: String,
       enum: ["pending", "active"],
       default: "pending",
     },
-    loginAt: {
-      type: Date,
-      required: true,
-    },
-    refreshToken: String, // Store refresh tokens
+    loginAt: { type: Date, required: true },
+    refreshToken: String,
   },
-  { timestamps: { createdAt: true, updatedAt: false} }
+  { timestamps: { createdAt: true, updatedAt: true } }
 );
 
-//pre save hook for username to Capitalization
+// 🔹 Pre-save hook: username, email, password
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("username")) {
-    return next();
+  try {
+    if (this.isModified("username")) {
+      this.username = await CapitalizationUsername(this.username);
+    }
+    if (this.isModified("email")) {
+      await emailValidation(this.email);
+    }
+    if (this.isModified("password")) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  // Capitalize function
-  this.username = await CapitalizationUsername(this.username);
-  next();
-});
-
-
-
-//pre save hook for password
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-  // Hash the password
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 // static register method
@@ -91,7 +72,7 @@ userSchema.statics.register = async function (username, email, password) {
     email,
     password,
     roles: "user",
-    account_status: "pending",
+    status: "pending",
     loginAt: Date.now(),
   });
 
@@ -100,7 +81,7 @@ userSchema.statics.register = async function (username, email, password) {
 
 userSchema.statics.login = async function (email, password) {
   //Validation check email and password
-  
+
   const user = await this.findOne({ email }).select("+ password");
   if (!user) {
     const error = new Error("Incorrect email!");
@@ -113,10 +94,36 @@ userSchema.statics.login = async function (email, password) {
     error.statusCode = 400;
     throw error;
   }
-  
+
   return user;
 };
 
-const User = new mongoose.model("User", userSchema);
-export default User;
+// 🔹 Static method: changePassword
+userSchema.statics.changePassword = async function (
+  userId,
+  currentPassword,
+  newPassword
+) {
+  const user = await this.findById(userId).select("+password");
+  if (!user) {
+    const error = new Error("User not found!");
+    error.statusCode = 400;
+    throw error;
+  }
+  if(newPassword){
+    await passwordValidation(newPassword);
+  }
+  const match = await bcrypt.compare(currentPassword, user.password);
+  if (!match) 
+  {
+    const error = new Error("Current password incorrect!");
+    error.statusCode = 400;
+    throw error;
+  }
+    
+  user.password = newPassword;
+  await user.save();
+  return true;
+};
 
+export default mongoose.model("User", userSchema);

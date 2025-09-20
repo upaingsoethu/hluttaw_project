@@ -123,6 +123,42 @@ export const CapitalizationUsername = (username) => {
   }
 };
 
+export const emailValidation = async (email) => {
+  if (!validator.isEmail(email)) 
+  {
+    const error =  new Error("Invalid email format!");
+    error.statusCode = 400;
+  }
+  return true;
+};
+
+export const passwordValidation = async (password) => {
+  // Validate password strength
+  if (
+    !validator.isStrongPassword(password, {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    const error = new Error(
+      "Password must be at least 6 characters long & contain at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol!"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+};
+
+
+
+
+
+
+
+
 
 
 // mongoID validation

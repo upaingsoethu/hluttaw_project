@@ -1,75 +1,69 @@
-// controllers/authController.js
+import fs from "fs";
+import path from "path";
+import moment from "moment/moment.js";
 import User from "../models/user.model.js";
+import { handleUserProfileUpload } from "../helpers/upload.js";
+import { getInitialsUsername } from "../helpers/username.js";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../helpers/tokens.js";
 import {
-  redisDeleteRefreshToken,
   redisStoreRefreshToken,
+  redisDeleteRefreshToken,
 } from "../helpers/redis.js";
 import {
   accessTokenStoreCookies,
   refreshTokenStoreCookies,
   deleteCookies,
 } from "../helpers/cookies.js";
-import moment from "moment/moment.js";
 import { loginValidation, mongoIdValidaton } from "../helpers/validation.js";
 
 moment.locale("my");
 
-const userList = async (req, res) => {
+// 🔹 Get all users
+export const userList = async (req, res) => {
   try {
-    const users = await User.find(
-      {},
-      "_id username email roles account_status loginAt"
-    ).sort({
-      createdAt: -1,
-    });
+    const users = await User.find().sort({ createdAt: -1 });
     if (users.length === 0) {
       const error = new Error("No users found!");
       error.status = false;
       error.statusCode = 404;
       throw error;
     }
-
     res.status(200).json({
       status: true,
       message: "User list retrieved successfully!",
       data: users.map((user) => ({
-        _id: user._id,
+        id: user._id,
         username: user.username,
+        profileInitial: getInitialsUsername(user.username),
         email: user.email,
         roles: user.roles,
-        account_status: user.account_status,
+        status: user.status,
         loginAt: moment(user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
+        profile: user.profile,
       })),
     });
   } catch (error) {
-    if (error.statusCode) {
-      throw error;
-    }
-    error.message = "Server Error in fetching user list!";
-    throw error;
+    res.status(404).json({ status: false, message: error.message });
   }
 };
 
-const registerUser = async (req, res) => {
+// 🔹 Register user
+export const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    //new user register
     const user = await User.register(username, email, password);
-
     if (user) {
       return res.status(201).json({
         status: true,
         message: "User register successfully!",
         data: {
-          _id: user._id,
+          id: user._id,
           username: user.username,
           email: user.email,
-          role: user.roles,
+          roles: user.roles,
           status: user.status,
         },
       });
@@ -88,55 +82,38 @@ const registerUser = async (req, res) => {
   }
 };
 
-const loginUser = async (req, res) => {
+// 🔹 Login user
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    //check validation
     await loginValidation(email, password);
-    //login user
     const user = await User.login(email, password);
-    // If user is found and password matches
-    if (user) {
-      const accessToken = await generateAccessToken(user._id); //life time 15 min
-      const refreshToken = await generateRefreshToken(user._id); // life time 7 days
-      //update user status pending to active and restore refresh token
-      user.refreshToken = refreshToken;
-      user.account_status = "active";
-      // Save the updated user document
-      await user.save();
-      const updateUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        {
-          $set: {
-            account_status: "active",
-            loginAt: new Date(),
-            refreshToken: refreshToken,
-          },
-        },
-        { new: true }
-      );
-      await user.save();
-      // Store refresh token in Redis
-      await redisStoreRefreshToken(user, refreshToken);
-      // Store cookies for access Token and refresh Token
-      await accessTokenStoreCookies(res, accessToken);
-      await refreshTokenStoreCookies(res, refreshToken);
 
-      res.status(200).json({
-        status: true,
-        message: "User login successfully!",
-        data: {
-          _id: updateUser._id,
-          username: updateUser.username,
-          email: updateUser.email,
-          role: updateUser.roles,
-          account_status: updateUser.account_status,
-          refresh_token: updateUser.refreshToken,
-          access_token: accessToken,
-          // refresh_token: refreshToken,
-        },
-      });
-    }
+    const accessToken = await generateAccessToken(user._id);
+    const refreshToken = await generateRefreshToken(user._id);
+
+    user.status = "active";
+    user.loginAt = new Date();
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    await redisStoreRefreshToken(user, refreshToken);
+    await accessTokenStoreCookies(res, accessToken);
+    await refreshTokenStoreCookies(res, refreshToken);
+
+    res.status(200).json({
+      status: true,
+      message: "Login successful!",
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.roles,
+        status: user.account_status,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      },
+    });
   } catch (error) {
     if (error.statusCode) {
       throw error;
@@ -146,40 +123,92 @@ const loginUser = async (req, res) => {
   }
 };
 
-const logoutUser = async (req, res) => {
+// 🔹 Update user
+export const updateUser = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    //check if refresh token exists
-    if (!refreshToken) {
-      const error = new Error("Refresh token not found in cookies!");
+    const file = await handleUserProfileUpload(req, res);
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      const error = new Error("User not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }
-    // req user check by id from protect middleware
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      const error = new Error("User not found!");
-      error.statusCode = 404;
-      throw error;
+
+    if (file) {
+      if (user.profile) {
+        const oldPath = path.join(process.cwd(), user.profile);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      user.profile = `/uploads/User_Profiles/${file.filename}`;
     }
-    // Remove refresh token from MongoDB
-    user.refreshToken = null;
+
+    const { username, email, roles, status } = req.body;
+    user.username = username || user.username;
+    user.email = email || user.email;
+    user.roles = roles || user.roles;
+    user.status = status || user.status;
+
     await user.save();
-    // Remove from Redis as well
-    await redisDeleteRefreshToken(user);
-    //Remove Cookies
-    await deleteCookies(res);
-    return res.status(200).json({ message: "Logged out successfully!" });
+    res.status(200).json({
+      status: true,
+      message: "User updated!",
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        roles: user.roles,
+        status: user.status,
+        profile: user.profile,
+      },
+    });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in user logout!";
+    error.message = "Server error in update profile!";
     throw error;
   }
 };
 
-const deleteUser = async (req , res)=>{
+// 🔹 Change password
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user._id;
+    await User.changePassword(userId, currentPassword, newPassword);
+    res
+      .status(200)
+      .json({ status: true, message: "Password changed successfully!" });
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server error in change password!";
+    throw error;
+  }
+};
+
+// 🔹 Logout user
+export const logoutUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    user.refreshToken = null;
+    await user.save();
+    await redisDeleteRefreshToken(user);
+    await deleteCookies(res);
+    res.status(200).json({ status: true, message: "Logged out!" });
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server error in logout!";
+    throw error;
+  }
+};
+
+// 🔹 Delete user
+export const deleteUser = async (req, res) => {
   try {
     await mongoIdValidaton(req.params.id);
     const user = await User.findByIdAndDelete(req.params.id);
@@ -188,6 +217,14 @@ const deleteUser = async (req , res)=>{
       error.statusCode = 400;
       throw error;
     }
+    // Delete profile image if exists
+    if (user.profile) {
+      const oldPath = path.join(process.cwd(), user.profile);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    await redisDeleteRefreshToken(user);
+    await deleteCookies(res);
     res
       .status(200)
       .json({ status: true, message: "User deleted successfully!" });
@@ -198,10 +235,10 @@ const deleteUser = async (req , res)=>{
     error.message = "Server Error in deleting user!";
     throw error;
   }
-}
+ 
+};
 
-
-const accessTokenGenerated = async (req, res) => {
+export const accessTokenGenerated = async (req, res) => {
   // This is handled by the refreshTokenMiddleware, if it passes, a new access token is already set in the cookie
   res.status(200).json({
     status: true,
@@ -213,17 +250,3 @@ const accessTokenGenerated = async (req, res) => {
     },
   });
 };
-
-export { userList, registerUser, loginUser, logoutUser, deleteUser, accessTokenGenerated };
-
-// if (error.name === "ValidationError") {
-//   const errors = {};
-//   for (const field in error.errors) {
-//     errors[field] = error.errors[field].message;
-//   }
-//   return res.status(400).json({ status: false, message: errors }); // Validation error
-// } else {
-//   return res
-//     .status(500)
-//     .json({ status: false, message: "Server error", error: error.message });
-// }
