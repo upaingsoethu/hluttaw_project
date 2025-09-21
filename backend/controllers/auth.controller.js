@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import moment from "moment/moment.js";
-import User from "../models/user.model.js";
+import User from "../models/auth.model.js";
 import { handleUserProfileUpload } from "../helpers/upload.js";
 import { getInitialsUsername } from "../helpers/username.js";
 import {
@@ -18,13 +18,13 @@ import {
   deleteCookies,
 } from "../helpers/cookies.js";
 import { loginValidation, mongoIdValidaton } from "../helpers/validation.js";
-
+import { json } from "stream/consumers";
 moment.locale("my");
 
-// 🔹 Get all users
+// Get all users
 export const userList = async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
+    const users = await User.find().sort({ loginAt: -1 });
     if (users.length === 0) {
       const error = new Error("No users found!");
       error.status = false;
@@ -33,24 +33,29 @@ export const userList = async (req, res) => {
     }
     res.status(200).json({
       status: true,
-      message: "User list retrieved successfully!",
+      message: "User list fetched successfully!",
       data: users.map((user) => ({
         id: user._id,
         username: user.username,
         profileInitial: getInitialsUsername(user.username),
+        profile: user.profile,
         email: user.email,
         roles: user.roles,
         status: user.status,
         loginAt: moment(user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
-        profile: user.profile,
+        createdAt: moment(user.createdAt).format("DD-MM-YYYY HH:mm:ss"),
       })),
     });
   } catch (error) {
-    res.status(404).json({ status: false, message: error.message });
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server Error in fetch user list!";
+    throw error;
   }
 };
 
-// 🔹 Register user
+// Register user
 export const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -62,9 +67,12 @@ export const registerUser = async (req, res) => {
         data: {
           id: user._id,
           username: user.username,
+          profileInitial: getInitialsUsername(user.username),
+          profile: user.profile,
           email: user.email,
           roles: user.roles,
           status: user.status,
+          loginAt: moment(user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
         },
       });
     } else {
@@ -77,12 +85,12 @@ export const registerUser = async (req, res) => {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in user registration";
+    error.message = "Server Error in user registration!";
     throw error;
   }
 };
 
-// 🔹 Login user
+//  Login user
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -94,7 +102,7 @@ export const loginUser = async (req, res) => {
     const refreshToken = await generateRefreshToken(user._id);
 
     // Update user login info
-    user.account_status = "active";
+    user.status = "active";
     user.loginAt = new Date();
     user.refreshToken = refreshToken;
     await user.save();
@@ -109,27 +117,31 @@ export const loginUser = async (req, res) => {
       data: {
         id: user._id,
         username: user.username,
+        profileInitial: getInitialsUsername(user.username),
+        profile: user.profile,
         email: user.email,
         roles: user.roles,
-        account_status: user.account_status,
+        status: user.status,
+        loginAt: moment(user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
         refresh_token: refreshToken,
         access_token: accessToken,
       },
     });
   } catch (error) {
-    res
-      .status(error.statusCode || 500)
-      .json({
-        status: false,
-        message: error.message || "Server Error in user login!",
-      });
+    if (error.statusCode) {
+      throw error;
+    }
+    error.message = "Server Error in user login!";
+    throw error;
   }
 };
 
-// 🔹 Update user
+// Update user
 export const updateUser = async (req, res) => {
   try {
+    // profile upload for multer middleware calling function
     const file = await handleUserProfileUpload(req, res);
+    const { username, email, roles, status } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) {
       const error = new Error("User not found!");
@@ -137,8 +149,9 @@ export const updateUser = async (req, res) => {
       error.statusCode = 400;
       throw error;
     }
-
+    //  check new profile image
     if (file) {
+      //check old profile image and delete
       if (user.profile) {
         const oldPath = path.join(process.cwd(), user.profile);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
@@ -146,7 +159,6 @@ export const updateUser = async (req, res) => {
       user.profile = `/uploads/User_Profiles/${file.filename}`;
     }
 
-    const { username, email, roles, status } = req.body;
     user.username = username || user.username;
     user.email = email || user.email;
     user.roles = roles || user.roles;
@@ -155,26 +167,28 @@ export const updateUser = async (req, res) => {
     await user.save();
     res.status(200).json({
       status: true,
-      message: "User updated!",
+      message: "User profile updated successfully!",
       data: {
         id: user._id,
         username: user.username,
+        profileInitial: getInitialsUsername(user.username),
+        profile: user.profile,
         email: user.email,
         roles: user.roles,
         status: user.status,
-        profile: user.profile,
+        loginAt: moment(user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
       },
     });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server error in update profile!";
+    error.message = "Server Error in update user profile!";
     throw error;
   }
 };
 
-// 🔹 Change password
+// Change password
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -187,12 +201,12 @@ export const changePassword = async (req, res) => {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server error in change password!";
+    error.message = "Server Error in change password!";
     throw error;
   }
 };
 
-// 🔹 Logout user
+//  Logout user
 export const logoutUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -200,23 +214,24 @@ export const logoutUser = async (req, res) => {
     await user.save();
     await redisDeleteRefreshToken(user);
     await deleteCookies(res);
-    res.status(200).json({ status: true, message: "Logged out!" });
+    res.status(200).json({ status: true, message: "Logged out successfully!" });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server error in logout!";
+    error.message = "Server Error in logout!";
     throw error;
   }
 };
 
-// 🔹 Delete user
+// Delete user
 export const deleteUser = async (req, res) => {
   try {
     await mongoIdValidaton(req.params.id);
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       const error = new Error("User not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }
@@ -238,18 +253,22 @@ export const deleteUser = async (req, res) => {
     error.message = "Server Error in deleting user!";
     throw error;
   }
- 
 };
 
+// Access Token Generated Success
 export const accessTokenGenerated = async (req, res) => {
-  // This is handled by the refreshTokenMiddleware, if it passes, a new access token is already set in the cookie
-  res.status(200).json({
+  return res.status(200).json({
     status: true,
     message: "Access token refreshed successfully!",
     data: {
-      user: req.user.username,
+      id: req.user._id,
+      username: req.user.username,
+      profileInitial: getInitialsUsername(req.user.username),
+      profile: req.user.profile,
       email: req.user.email,
-      access_token: req.accessToken,
+      roles: req.user.roles,
+      status: req.user.status,
+      loginAt: moment(req.user.loginAt).format("DD-MM-YYYY HH:mm:ss"),
     },
   });
 };

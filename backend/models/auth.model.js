@@ -5,7 +5,7 @@ import {
   emailValidation,
   passwordValidation,
   registerValidation,
-  loginValidation
+  loginValidation,
 } from "../helpers/validation.js";
 
 const userSchema = new mongoose.Schema(
@@ -31,30 +31,36 @@ const userSchema = new mongoose.Schema(
       default: "pending",
     },
     loginAt: { type: Date, required: true },
-    refreshToken: String,
+    refreshToken: { type: String, default: null },
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  { timestamps: true  }
 );
 
-// 🔹 Pre-save hook: username, email, password
+// Pre-save hook: username, email, password
 userSchema.pre("save", async function (next) {
   try {
     if (this.isModified("username")) {
       this.username = await CapitalizationUsername(this.username);
     }
     if (this.isModified("email")) {
-      await emailValidation(this.email);
+       await emailValidation(this.email);
     }
     if (this.isModified("password")) {
+      //this.password = await passwordValidation(this.password);
       this.password = await bcrypt.hash(this.password, 10);
     }
     next();
   } catch (error) {
-    next(error);
+    if(error.statusCode){
+      throw error;
+    }
+     error.message = "Server Error in Pre Hook!";
+     throw error;
+
   }
 });
 
-// static register method
+//  Static method: register
 userSchema.statics.register = async function (username, email, password) {
   // Validate user input
   await registerValidation(username, email, password);
@@ -77,22 +83,22 @@ userSchema.statics.register = async function (username, email, password) {
     status: "pending",
     loginAt: Date.now(),
   });
-
   return user;
 };
 
+//  Static method: login
 userSchema.statics.login = async function (email, password) {
-  //Validation check email and password
-
   const user = await this.findOne({ email }).select("+password");
   if (!user) {
     const error = new Error("Incorrect email!");
+    error.status = false;
     error.statusCode = 404;
     throw error;
   }
   const match = await bcrypt.compare(password, user.password);
   if (!match) {
     const error = new Error("Incorrect password!");
+    error.status = false;
     error.statusCode = 400;
     throw error;
   }
@@ -100,7 +106,7 @@ userSchema.statics.login = async function (email, password) {
   return user;
 };
 
-// 🔹 Static method: changePassword
+//  Static method: changePassword
 userSchema.statics.changePassword = async function (
   userId,
   currentPassword,
@@ -112,17 +118,17 @@ userSchema.statics.changePassword = async function (
     error.statusCode = 400;
     throw error;
   }
-  if(newPassword){
+  if (newPassword) {
     await passwordValidation(newPassword);
   }
   const match = await bcrypt.compare(currentPassword, user.password);
-  if (!match) 
-  {
+  if (!match) {
     const error = new Error("Current password incorrect!");
+    error.status = false;
     error.statusCode = 400;
     throw error;
   }
-    
+
   user.password = newPassword;
   await user.save();
   return true;

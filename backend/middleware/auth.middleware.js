@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import User from "../models/user.model.js";
+import User from "../models/auth.model.js";
 import {redisGetRefreshToken} from "../helpers/redis.js"
 import { generateAccessToken } from "../helpers/tokens.js";
 import { accessTokenStoreCookies } from "../helpers/cookies.js";
