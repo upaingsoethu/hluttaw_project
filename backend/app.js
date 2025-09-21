@@ -13,12 +13,18 @@ import {
 // custom modules
 import { apiLimiter, loginLimiter } from "./helpers/rateLimit.js";
 import authRoute from "./routes/auth.route.js";
-import postRoute from "./routes/post.route.js";
-import tagRoute from "./routes/tag.route.js";
 import committeeRoute from "./routes/committee.route.js";
 import electionRoute from "./routes/election.route.js";
+import governmentRoute from "./routes/government.route.js";
+
+
+import postRoute from "./routes/post.route.js";
+import tagRoute from "./routes/tag.route.js";
+
+
 import lawRoute from "./routes/law.route.js";
 import hluttawRoute from "./routes/hluttaw.route.js";
+
 
 import { CORS } from "./helpers/corsSites.js";
 // Load environment variables from .env file
@@ -51,12 +57,17 @@ app.get("/api", (req, res) => {
 
 app.use("/api/auth",  authRoute);   
 app.use("/api/setting/committees", committeeRoute); 
-app.use("/api/setting/tags", tagRoute); 
-
 app.use("/api/setting/election-types", electionRoute); 
-app.use("/api/setting/hluttaws", hluttawRoute); 
+app.use("/api/setting/governments", governmentRoute); 
+app.use("/api/setting/hluttaw-times", hluttawRoute); 
 app.use("/api/data/laws", lawRoute); 
 app.use("/api/data/posts", postRoute); 
+app.use("/api/setting/tags", tagRoute); 
+
+
+
+
+
 
 
 

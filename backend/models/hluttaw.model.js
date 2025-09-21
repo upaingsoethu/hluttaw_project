@@ -2,8 +2,9 @@ import mongoose from "mongoose";
 
 const hluttawSchema = new mongoose.Schema(
   {
-    hluttawTime: { type: String, required: true, trim: true },
-    hluttawShortTime: { type: String, required: true, trim: true },
+    time: { type: String, required: true, trim: true },
+    shortTime: { type: String, required: true, trim: true },
+    period: { type: String, require: true, trim: true },
   },
   { timestamps: true }
 );

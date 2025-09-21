@@ -1,40 +1,46 @@
-import { governmentValidation, mongoIdValidaton } from "../helpers/validation.js";
+import {
+  governmentValidation,
+  mongoIdValidaton,
+} from "../helpers/validation.js";
 import Government from "../models/government.model.js";
 
-export const governmentList = async (req, res) => {
+export const departmentsList = async (req, res) => {
   try {
-    const governments = await Government.find(
-      {},
-      "_id governmentName governmentShortName"
-    ).sort({
+    const departments = await Government.find().sort({
       createdAt: -1,
     });
-    if (governments.length === 0) {
-      const error = new Error("No governments data found!");
+    if (departments.length === 0) {
+      const error = new Error("No departments found!");
+      error.status = false;
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Governments data retrieved successfully!",
-      data: governments,
+      message: "Department data fetched successfully!",
+      data: departments,
     });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in fetching governments!";
+    error.message = "Server Error in fetching departments!";
     throw error;
   }
 };
 
-export const createGovernment = async (req, res) => {
+export const createDepartment = async (req, res) => {
   try {
-    const { governmentName, governmentShortName } = req.body;
-    await governmentValidation(governmentName, governmentShortName);
+    const { departmentName, departmentShortName, governmentName } = req.body;
+    await governmentValidation(
+      departmentName,
+      departmentShortName,
+      governmentName
+    );
     const newGovernment = await Government.create({
-      governmentName,
-      governmentShortName,
+      departmentName,
+      departmentShortName,
+      governmentName
     });
     res.status(201).json({
       status: true,
@@ -46,57 +52,60 @@ export const createGovernment = async (req, res) => {
       throw error;
     }
     console.log(error.message);
-    error.message = "Server Error in creating government!";
+    error.message = "Server Error in creating departments!";
     throw error;
   }
 };
 
-export const updateGovernment = async (req, res) => {
+export const updateDepartment = async (req, res) => {
   try {
-    const { governmentName, governmentShortName } = req.body;
+    const { departmentName, departmentShortName, governmentName } = req.body;
     await mongoIdValidaton(req.params.id);
     const government = await Government.findById(req.params.id);
     if (!government) {
-      const error = new Error("Government not found!");
+      const error = new Error("Department not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }
+    government.departmentName = departmentName || government.departmentName;
+    government.departmentShortName = departmentShortName || government.departmentShortName;
     government.governmentName = governmentName || government.governmentName;
-    government.governmentShortName = governmentShortName || government.governmentShortName;
 
     const updatedGovernment = await government.save();
 
     res.status(200).json({
       status: true,
-      message: "Government updated successfully!",
+      message: "Department updated successfully!",
       data: updatedGovernment,
     });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in updating government!";
+    error.message = "Server Error in updating department!";
     throw error;
   }
 };
 
-export const deleteGovernment = async (req, res) => {
+export const deleteDepartment = async (req, res) => {
   try {
     await mongoIdValidaton(req.params.id);
-    const deletedGovernment = await Government.findByIdAndDelete(req.params.id);
-    if (!deletedGovernment) {
-      const error = new Error("Government not found!");
+    const deletedDepartment = await Government.findByIdAndDelete(req.params.id);
+    if (!deletedDepartment) {
+      const error = new Error("Department not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }
     res
       .status(200)
-      .json({ status: true, message: "Government deleted successfully!" });
+      .json({ status: true, message: "Department deleted successfully!" });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in deleting government!";
+    error.message = "Server Error in deleting department!";
     throw error;
   }
 };

@@ -203,9 +203,9 @@ export const committeeValidation = async (hluttawId, name, shortName) => {
 };
 
 // election validaton 
-export const electionValidation = async (name, shortName) => {
+export const electionTypesValidation = async (name, shortName , description) => {
   if (!name || !shortName) {
-    const error = new Error("Election Name and Election ShortName fields are required!");
+    const error = new Error("Election Name and ShortName & Description fields are required!");
     error.statusCode = 400;
     throw error;
   }
@@ -223,19 +223,25 @@ export const tagsValidation = async (name, shortName) => {
 }
 
 // government validaton 
-export const governmentValidation = async (name, shortName) => {
-  if (!name || !shortName) {
-    const error = new Error("Government Name and Government ShortName fields are required!");
+export const governmentValidation = async (
+  department,
+  departmentShortName,
+  governmentName
+) => {
+  if (!department || !departmentShortName || !governmentName) {
+    const error = new Error(
+      "Departments Name and ShortName & Government Name fields are required!"
+    );
     error.statusCode = 400;
     throw error;
   }
   return true;
-}
+};
 
-// government validaton 
-export const hluttawValidation = async (name, shortName) => {
-  if (!name || !shortName) {
-    const error = new Error("Hluttaw Time and Hluttaw ShortTime fields are required!");
+// hluttaw validaton 
+export const hluttawValidation = async (time, shortTime , period) => {
+  if (!time || !shortTime || !period) {
+    const error = new Error("Hluttaw time and shortTime & period fields are required!");
     error.statusCode = 400;
     throw error;
   }
