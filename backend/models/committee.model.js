@@ -2,20 +2,24 @@ import mongoose from "mongoose";
 
 const committeeSchema = new mongoose.Schema(
   {
-    committeeName: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
-    committeeShortName: {
+    shortName: {
       type: String,
       required: true,
       trim: true,
+    },
+    hluttawId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hluttaw",
+      required: true,
     },
   },
   { timestamps: true }
 );
-
 
 const Committee = mongoose.model("Committee", committeeSchema);
 

@@ -188,14 +188,19 @@ export const postValidation = async (title, content, tags,  hluttawId ) => {
 
 
 // committees validaton 
-export const committeeValidation = async (name, shortName) => {
-  if (!name || !shortName) {
-    const error = new Error("CommitteeName and Committee ShortName fields are required!");
+export const committeeValidation = async (hluttawId, name, shortName) => {
+  if (!hluttawId ||!name || !shortName ) {
+    const error = new Error(
+      "Hluttaw Time & Committee Name and ShortName fields are required!"
+    );
+    if(hluttawId) {
+      await mongoIdValidaton(hluttawId);
+    }
     error.statusCode = 400;
     throw error;
   }
   return true;
-}
+};
 
 // election validaton 
 export const electionValidation = async (name, shortName) => {

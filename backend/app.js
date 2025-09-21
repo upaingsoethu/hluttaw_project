@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import path from "path";
+
 // error handlers modules
 import {
   routeErrorHandler,
@@ -49,8 +50,9 @@ app.get("/api", (req, res) => {
 //app.use("/api/auth/login", loginLimiter); // Apply stricter limit to login route
 
 app.use("/api/auth",  authRoute);   
-app.use("/api/setting/tags", tagRoute); 
 app.use("/api/setting/committees", committeeRoute); 
+app.use("/api/setting/tags", tagRoute); 
+
 app.use("/api/setting/election-types", electionRoute); 
 app.use("/api/setting/hluttaws", hluttawRoute); 
 app.use("/api/data/laws", lawRoute); 
