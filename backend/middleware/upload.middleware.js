@@ -25,9 +25,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({
+export const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  //limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "application/pdf"];
     if (!allowed.includes(file.mimetype)) {
@@ -41,36 +41,3 @@ const upload = multer({
 
 
 
-export const handleLawUpload = (req, res) =>
-  new Promise((resolve, reject) => {
-    upload.single("Law")(req, res, (err) => {
-      if (err) return reject(err);
-      resolve(req.file);
-    });
-  });
-
-
-  export const handlePostUpload = (req, res) =>
-    new Promise((resolve, reject) => {
-      upload.array("News" ,5)(req, res, (err) => {
-        if (err) return reject(err);
-        resolve(req.files);
-      });
-    });
-
-
- export const handleMPProfileUpload = (req, res) =>
-   new Promise((resolve, reject) => {
-     upload.single("MPProfile")(req, res, (err) => {
-       if (err) return reject(err);
-       resolve(req.file);
-     });
-   });
-
-export const handleUserProfileUpload = (req, res) =>
-  new Promise((resolve, reject) => {
-    upload.single("UserProfile")(req, res, (err) => {
-      if (err) return reject(err);
-      resolve(req.file);
-    });
-  });

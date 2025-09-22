@@ -2,7 +2,7 @@ import {
   electionTypesValidation,
   mongoIdValidaton,
 } from "../helpers/validation.js";
-import ElectionTypes from "../models/electiontypes.model.js";
+import ElectionTypes from "../models/electiontype.model.js";
 
 export const electionsTypes = async (req, res) => {
   try {

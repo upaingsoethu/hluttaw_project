@@ -1,21 +1,18 @@
 import { tagsValidation, mongoIdValidaton } from "../helpers/validation.js";
 import Tag from "../models/tag.model.js";
 
-
 export const tagsList = async (req, res) => {
   try {
-    const tagList = await Tag
-      .find({}, "_id tagName tagShortName")
-      .sort({ createdAt: -1 });
-    if (tagList.length === 0) {
+    const tags = await Tag.find().sort({ createdAt: -1 });
+    if (tags.length === 0) {
       const error = new Error("No tags found!");
       error.statusCode = 404;
       throw error;
     }
     res.status(200).json({
       status: true,
-      message: "Tags retrieved successfully!",
-      data: tagList,
+      message: "Tags list fetched successfully!",
+      data: tags,
     });
   } catch (error) {
     if (error.statusCode) {
@@ -28,9 +25,9 @@ export const tagsList = async (req, res) => {
 
 export const createTag = async (req, res) => {
   try {
-    const { tagName, tagShortName } = req.body;
-    await tagsValidation(tagName, tagShortName);
-    const newTag = await Tag.create({ tagName, tagShortName });
+    const { name, shortName } = req.body;
+    await tagsValidation(name, shortName);
+    const newTag = await Tag.create({ name, shortName });
     res.status(201).json({
       status: true,
       message: "Tag created successfully!",
@@ -40,7 +37,6 @@ export const createTag = async (req, res) => {
     if (error.statusCode) {
       throw error;
     }
-    console.log(error.message);
     error.message = "Server Error in creating tag!";
     throw error;
   }
@@ -48,7 +44,7 @@ export const createTag = async (req, res) => {
 
 export const updateTag = async (req, res) => {
   try {
-    const { tagName, tagShortName } = req.body;
+    const { name, shortName } = req.body;
     await mongoIdValidaton(req.params.id);
     const tag = await Tag.findById(req.params.id);
     if (!tag) {
@@ -57,8 +53,8 @@ export const updateTag = async (req, res) => {
       throw error;
     }
 
-    tag.tagName = tagName || tag.tagName;
-    tag.tagShortName = tagShortName || tag.tagShortName;
+    tag.name = name || tag.name;
+    tag.shortName = shortName || tag.shortName;
 
     const updatedTag = await tag.save();
 
@@ -96,4 +92,3 @@ export const deleteTag = async (req, res) => {
     throw error;
   }
 };
-

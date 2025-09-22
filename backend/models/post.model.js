@@ -6,14 +6,14 @@ const postSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     content: {
       type: String,
       required: true,
+      trim: true,
     },
-    imageUrl:[
-      { type: String }
-    ],
+    imageUrl: [{ type: String, required: true }],
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -26,10 +26,18 @@ const postSchema = new mongoose.Schema(
         required: true,
       },
     ],
-    committeeId: { type: mongoose.Schema.Types.ObjectId, ref: "Committee", required: false },
-    hluttawId: { type: mongoose.Schema.Types.ObjectId, ref: "Hluttaw", required: true },
+    committeeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Committee",
+      required: false,
+    },
+    hluttawId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hluttaw",
+      required: true,
+    },
     viewCount: { type: Number, default: 0 },
-    rating: { type: Number, default: 0 },
+    viewRating: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import moment from "moment/moment.js";
 import User from "../models/auth.model.js";
-import { handleUserProfileUpload } from "../helpers/upload.js";
 import { getInitialsUsername } from "../helpers/username.js";
 import {
   generateAccessToken,
@@ -18,7 +17,7 @@ import {
   deleteCookies,
 } from "../helpers/cookies.js";
 import { loginValidation, mongoIdValidaton } from "../helpers/validation.js";
-import { json } from "stream/consumers";
+
 moment.locale("my");
 
 // Get all users
@@ -139,8 +138,8 @@ export const loginUser = async (req, res) => {
 // Update user
 export const updateUser = async (req, res) => {
   try {
-    // profile upload for multer middleware calling function
-    const file = await handleUserProfileUpload(req, res);
+
+    const file = req.file; // get file from multer middleware;
     const { username, email, roles, status } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) {

@@ -6,7 +6,7 @@ import {
   deleteElectionTypes,
   electionsTypes,
   updateElectionTypes,
-} from "../controllers/electiontypes.controller.js";
+} from "../controllers/electiontype.controller.js";
 
 const router = express.Router();
 

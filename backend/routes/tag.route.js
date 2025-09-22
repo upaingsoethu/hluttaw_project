@@ -1,7 +1,7 @@
 // routes/postRoutes.js
 import express from "express";
 import { checkAuth } from "../middleware/auth.middleware.js";
-import { createTag, updateTag, deleteTag, tagsList} from "../controllers/tags.controller.js"
+import { createTag, updateTag, deleteTag, tagsList} from "../controllers/tag.controller.js"
 const router = express.Router();
 
 router.get("/" , tagsList);
