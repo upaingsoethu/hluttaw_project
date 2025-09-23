@@ -15,14 +15,14 @@ export const hluttawList = async (req, res) => {
     }
     res.status(200).json({
       status: true,
-      message: "Hluttaws data fetch successfully!",
+      message: "Hluttaw time data fetch successfully!",
       data: hluttaws,
     });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in fetching hluttaws!";
+    error.message = "Server Error in fetching hluttaw time!";
     throw error;
   }
 };
@@ -38,7 +38,7 @@ export const createHluttaw = async (req, res) => {
     });
     res.status(201).json({
       status: true,
-      message: "New Hluttaw created successfully!",
+      message: "Hluttaw Time created successfully!",
       data: newHluttaw,
     });
   } catch (error) {
@@ -46,7 +46,7 @@ export const createHluttaw = async (req, res) => {
       throw error;
     }
     console.log(error.message);
-    error.message = "Server Error in creating hluttaw!";
+    error.message = "Server Error in creating hluttaw time!";
     throw error;
   }
 };
@@ -57,7 +57,7 @@ export const updateHluttaw = async (req, res) => {
     await mongoIdValidaton(req.params.id);
     const hluttaw = await Hluttaw.findById(req.params.id);
     if (!hluttaw) {
-      const error = new Error("Hluttaw not found!");
+      const error = new Error("Hluttaw time not found!");
       error.status = false;
       error.statusCode = 400;
       throw error;
@@ -70,14 +70,14 @@ export const updateHluttaw = async (req, res) => {
 
     res.status(200).json({
       status: true,
-      message: "Hluttaw updated successfully!",
+      message: "Hluttaw time updated successfully!",
       data: updatedHluttaw,
     });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in updating hluttaw!";
+    error.message = "Server Error in updating hluttaw time!";
     throw error;
   }
 };
@@ -87,19 +87,19 @@ export const deleteHluttaw = async (req, res) => {
     await mongoIdValidaton(req.params.id);
     const deletedHluttaw = await Hluttaw.findByIdAndDelete(req.params.id);
     if (!deletedHluttaw) {
-      const error = new Error("Hluttaw not found!");
+      const error = new Error("Hluttaw time not found!");
       error.status = false;
       error.statusCode = 400;
       throw error;
     }
     res
       .status(200)
-      .json({ status: true, message: "Hluttaw deleted successfully!" });
+      .json({ status: true, message: "Hluttaw time deleted successfully!" });
   } catch (error) {
     if (error.statusCode) {
       throw error;
     }
-    error.message = "Server Error in deleting hluttaw!";
+    error.message = "Server Error in deleting hluttaw time!";
     throw error;
   }
 };

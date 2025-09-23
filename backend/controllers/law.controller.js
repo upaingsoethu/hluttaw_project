@@ -48,15 +48,16 @@ export const LawsList = async (req, res) => {
 export const createLaw = async (req, res) => {
   try {
     const file = req.file; //file get from multer middleware
-    const { number, description, remark, hluttawId } = req.body;
-    await lawValidation(number, description, remark, hluttawId);
     //check upload pdf file
     if (!file) {
-      const error = new Error(".PDF file is required!");
+      const error = new Error("Law file is required!");
       error.status = false;
       error.statusCode = 404;
       throw error;
     }
+    const { number, description, remark, hluttawId } = req.body;
+    await lawValidation(number, description, remark, hluttawId, file);
+
     const downloadUrl = `/uploads/Laws/${file.filename}`;
     const law = new Law({
       number,
@@ -97,9 +98,6 @@ export const updateLaw = async (req, res) => {
     const { number, description, remark, hluttawId } = req.body;
 
     await mongoIdValidaton(req.params.id);
-
-    await mongoIdValidaton(hluttawId);
-
     const law = await Law.findById(req.params.id);
     if (!law) {
       const error = new Error("No laws data found!");
@@ -107,7 +105,6 @@ export const updateLaw = async (req, res) => {
       error.statusCode = 404;
       throw error;
     }
-
     // Optional: delete old file if new uploaded
     if (file && law.downloadUrl) {
       const oldPath = path.join(process.cwd(), law.downloadUrl);

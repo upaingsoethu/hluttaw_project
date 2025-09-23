@@ -6,6 +6,7 @@ export const tagsList = async (req, res) => {
     const tags = await Tag.find().sort({ createdAt: -1 });
     if (tags.length === 0) {
       const error = new Error("No tags found!");
+      error.status = false;
       error.statusCode = 404;
       throw error;
     }
@@ -49,6 +50,7 @@ export const updateTag = async (req, res) => {
     const tag = await Tag.findById(req.params.id);
     if (!tag) {
       const error = new Error("Tag not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }
@@ -78,6 +80,7 @@ export const deleteTag = async (req, res) => {
     const deletedTag = await Tag.findByIdAndDelete(req.params.id);
     if (!deletedTag) {
       const error = new Error("Tag not found!");
+      error.status = false;
       error.statusCode = 400;
       throw error;
     }

@@ -155,7 +155,7 @@ export const updateUser = async (req, res) => {
         const oldPath = path.join(process.cwd(), user.profile);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
-      user.profile = `/uploads/User_Profiles/${file.filename}`;
+      user.profile = `/uploads/User/${file.filename}`;
     }
 
     user.username = username || user.username;

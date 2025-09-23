@@ -16,14 +16,18 @@ import authRoute from "./routes/auth.route.js";
 import committeeRoute from "./routes/committee.route.js";
 import electionRoute from "./routes/election.route.js";
 import governmentRoute from "./routes/government.route.js";
+import hluttawRoute from "./routes/hluttaw.route.js";
+import lawRoute from "./routes/law.route.js";
+import meetingRoute from "./routes/meeting.route.js";
+import politicalPartiesRoute from "./routes/political.parties.route.js";
 
 
 import postRoute from "./routes/post.route.js";
 import tagRoute from "./routes/tag.route.js";
 
 
-import lawRoute from "./routes/law.route.js";
-import hluttawRoute from "./routes/hluttaw.route.js";
+
+
 
 
 import { CORS } from "./helpers/corsSites.js";
@@ -48,7 +52,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Basic route
 app.get("/api", (req, res) => {
-  res.send("Hey! Ayeyarwady Region Hluttaw API is running...");
+  res.send("မင်္ဂလာပါ! Ayeyarwady Region Hluttaw API is running...");
 });
 
 // Routes
@@ -60,6 +64,8 @@ app.use("/api/setting/committees", committeeRoute);
 app.use("/api/setting/election-types", electionRoute); 
 app.use("/api/setting/governments", governmentRoute); 
 app.use("/api/setting/hluttaw-times", hluttawRoute); 
+app.use("/api/setting/meeting-types", meetingRoute); 
+app.use("/api/setting/political-parties", politicalPartiesRoute); 
 app.use("/api/data/laws", lawRoute); 
 app.use("/api/data/posts", postRoute); 
 app.use("/api/setting/tags", tagRoute); 

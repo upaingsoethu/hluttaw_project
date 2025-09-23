@@ -1,5 +1,7 @@
 import validator from "validator";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 
 export const registerValidation = async (username, email, password) => {
   if (!username && email && password) {
@@ -238,13 +240,15 @@ export const hluttawValidation = async (time, shortTime, period) => {
 };
 
 // law validaton function
-export const lawValidation = async (number, description, remark, hluttawId) => {
+export const lawValidation = async (number, description, remark, hluttawId , file) => {
   if (hluttawId) {
     await mongoIdValidaton(hluttawId);
   }
   if (!number || !description || !remark || !hluttawId) {
+    const temportyFile = path.join(process.cwd(),`/uploads/Laws/${file.filename}`);
+    if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
     const error = new Error(
-      "Law number and description and remark & Hlutaw Time fields are required!"
+      "Law no and description and remark & hlutaw time fields are required!"
     );
 
     error.status = false;
@@ -255,8 +259,28 @@ export const lawValidation = async (number, description, remark, hluttawId) => {
 };
 
 // post validaton function
-export const postValidation = async (title, content, tags, hluttawId) => {
+export const postValidation = async (title, content, tags, hluttawId , files) => {
   if (!title || !content || !tags || !hluttawId) {
+    // ✅ Files cleanup
+    if (files) {
+      if (Array.isArray(files)) {
+        // Multiple files (req.files)
+        files.forEach((file) => {
+          const tempFile = path.join(
+            process.cwd(),
+            `/uploads/News/${file.filename}`
+          );
+          if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+        });
+      } else {
+        // Single file (req.file)
+        const tempFile = path.join(
+          process.cwd(),
+          `/uploads/News/${files.filename}`
+        );
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+      }
+    }
     const error = new Error(
       "Title and Content and  Tags and Hluttaw Time fields are required!"
     );
@@ -274,6 +298,34 @@ export const tagsValidation = async (name, shortName) => {
     const error = new Error("Tag Name and ShortName fields are required!");
     error.status = false;
     error.statusCode = 400;
+    throw error;
+  }
+  return true;
+};
+
+// metting validation function
+export const meetingValidation = async (name, shortName , description) => {
+  if (!name || !shortName || !description) {
+    const error = new Error("Meeting name and shortName & description fields are required!");
+    error.status = false;
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+};
+
+// party validation function
+export const partyValidation = async (name, shortName , file ) => {
+  if (!name || !shortName ) {
+   const temportyFile = path.join(
+     process.cwd(),
+     `/uploads/Party/${file.filename}`
+   );
+   if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
+    const error = new Error("Party name and shortName fields are required!");
+    error.status = false;
+    error.statusCode = 400;
+
     throw error;
   }
   return true;

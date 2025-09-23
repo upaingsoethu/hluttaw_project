@@ -11,7 +11,7 @@ import {
   changePassword,
 } from "../controllers/auth.controller.js";
 import { checkAuth, checkRefreshToken } from "../middleware/auth.middleware.js"; // Import the authentication middleware
-import { upload } from "../middleware/upload.middleware.js";
+import { userUploadMiddleware} from "../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", checkAuth, logoutUser);
 router.patch("/change-password", checkAuth, changePassword);
-router.patch("/user/:id", upload.single("UserProfile"),updateUser);
+router.patch("/user/:id", userUploadMiddleware ,updateUser);
 router.delete("/user/:id", deleteUser);
 router.get("/refreshAccessToken", checkRefreshToken, accessTokenGenerated);
 
