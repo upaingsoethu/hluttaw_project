@@ -4,56 +4,12 @@ import fs from "fs";
 import path from "path";
 
 export const registerValidation = async (username, email, password) => {
-  if (!username && email && password) {
-    const error = new Error("Username field is required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (username && !email && password) {
-    const error = new Error("Email field is required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (username && email && !password) {
-    const error = new Error("Password field is required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
   if (!username && !email && !password) {
-    const error = new Error(
-      "Username and Email and Password fields are required!"
-    );
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
   }
-
-  if (!username && !email && password) {
-    const error = new Error("Username and Email fields are required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-  if (!username && email && !password) {
-    const error = new Error("Username and Password fields are required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (username && !email && !password) {
-    const error = new Error("Email and Password fields are required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
   // Validate email format
   if (!validator.isEmail(email)) {
     const error = new Error("Invalid your email format!");
@@ -84,21 +40,8 @@ export const registerValidation = async (username, email, password) => {
 
 // Login validation
 export const loginValidation = async (email, password) => {
-  if (!email && password) {
-    const error = new Error("Email is required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-  if (email && !password) {
-    const error = new Error("Password is required!");
-    error.status = false;
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (!email && !password) {
-    const error = new Error("Email and password are required!");
+  if (!email || !password) {
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -116,23 +59,15 @@ export const loginValidation = async (email, password) => {
 // Capitalization function for username
 export const CapitalizationUsername = (username) => {
   try {
-    if (username) {
-      const capitalized = username
-        .split(" ")
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        )
-        .join(" ");
-      return capitalized;
-    } else {
-      const error = new Error("Username is required for capitalization!");
-      error.status = false;
-      error.statusCode = 400;
-      throw error;
-    }
+    const capitalized = username
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+    return capitalized;
   } catch (error) {
-    error = new Error("Error in capitalizing username!");
-    error.statusCode = 500;
+    error.message = "Capitalization username error!";
+    error.status = false;
+    error.statusCode = 400;
     throw error;
   }
 };
@@ -183,25 +118,21 @@ export const mongoIdValidaton = async (id) => {
 // committees validaton function
 export const committeeValidation = async (hluttawId, name, shortName) => {
   if (!hluttawId || !name || !shortName) {
-    const error = new Error(
-      "Hluttaw Time & Committee Name and ShortName fields are required!"
-    );
-    if (hluttawId) {
-      await mongoIdValidaton(hluttawId);
-    }
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
+  }
+  if (hluttawId) {
+    await mongoIdValidaton(hluttawId);
   }
   return true;
 };
 
 // election validaton function
-export const electionTypesValidation = async (name, shortName, description) => {
+export const electionTypesValidation = async (name, shortName) => {
   if (!name || !shortName) {
-    const error = new Error(
-      "Election Name and ShortName & Description fields are required!"
-    );
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -216,9 +147,7 @@ export const governmentValidation = async (
   governmentName
 ) => {
   if (!department || !departmentShortName || !governmentName) {
-    const error = new Error(
-      "Departments Name and ShortName & Government Name fields are required!"
-    );
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -229,9 +158,7 @@ export const governmentValidation = async (
 // hluttaw validaton function
 export const hluttawValidation = async (time, shortTime, period) => {
   if (!time || !shortTime || !period) {
-    const error = new Error(
-      "Hluttaw time and shortTime & period fields are required!"
-    );
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -240,26 +167,38 @@ export const hluttawValidation = async (time, shortTime, period) => {
 };
 
 // law validaton function
-export const lawValidation = async (number, description, remark, hluttawId , file) => {
-  if (hluttawId) {
-    await mongoIdValidaton(hluttawId);
-  }
+export const lawValidation = async (
+  number,
+  description,
+  remark,
+  hluttawId,
+  file
+) => {
   if (!number || !description || !remark || !hluttawId) {
-    const temportyFile = path.join(process.cwd(),`/uploads/Laws/${file.filename}`);
-    if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
-    const error = new Error(
-      "Law no and description and remark & hlutaw time fields are required!"
+    const temportyFile = path.join(
+      process.cwd(),
+      `/uploads/laws/${file.filename}`
     );
-
+    if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
+  }
+  if (hluttawId) {
+    await mongoIdValidaton(hluttawId);
   }
   return true;
 };
 
 // post validaton function
-export const postValidation = async (title, content, tags, hluttawId , files) => {
+export const postValidation = async (
+  title,
+  content,
+  tags,
+  hluttawId,
+  files
+) => {
   if (!title || !content || !tags || !hluttawId) {
     // ✅ Files cleanup
     if (files) {
@@ -268,7 +207,7 @@ export const postValidation = async (title, content, tags, hluttawId , files) =>
         files.forEach((file) => {
           const tempFile = path.join(
             process.cwd(),
-            `/uploads/News/${file.filename}`
+            `/uploads/news/${file.filename}`
           );
           if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
         });
@@ -276,14 +215,12 @@ export const postValidation = async (title, content, tags, hluttawId , files) =>
         // Single file (req.file)
         const tempFile = path.join(
           process.cwd(),
-          `/uploads/News/${files.filename}`
+          `/uploads/news/${files.filename}`
         );
         if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
       }
     }
-    const error = new Error(
-      "Title and Content and  Tags and Hluttaw Time fields are required!"
-    );
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -295,7 +232,7 @@ export const postValidation = async (title, content, tags, hluttawId , files) =>
 // tags validation function
 export const tagsValidation = async (name, shortName) => {
   if (!name || !shortName) {
-    const error = new Error("Tag Name and ShortName fields are required!");
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -304,9 +241,9 @@ export const tagsValidation = async (name, shortName) => {
 };
 
 // metting validation function
-export const meetingValidation = async (name, shortName , description) => {
+export const meetingValidation = async (name, shortName, description) => {
   if (!name || !shortName || !description) {
-    const error = new Error("Meeting name and shortName & description fields are required!");
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
     throw error;
@@ -315,17 +252,16 @@ export const meetingValidation = async (name, shortName , description) => {
 };
 
 // party validation function
-export const partyValidation = async (name, shortName , file ) => {
-  if (!name || !shortName ) {
-   const temportyFile = path.join(
-     process.cwd(),
-     `/uploads/Party/${file.filename}`
-   );
-   if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
-    const error = new Error("Party name and shortName fields are required!");
+export const partyValidation = async (name, shortName, file) => {
+  if (!name || !shortName) {
+    const temportyFile = path.join(
+      process.cwd(),
+      `/uploads/parties/${file.filename}`
+    );
+    if (fs.existsSync(temportyFile)) fs.unlinkSync(temportyFile);
+    const error = new Error("All fields must be filled!");
     error.status = false;
     error.statusCode = 400;
-
     throw error;
   }
   return true;

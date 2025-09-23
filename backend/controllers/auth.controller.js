@@ -138,16 +138,9 @@ export const loginUser = async (req, res) => {
 // Update user
 export const updateUser = async (req, res) => {
   try {
-
     const file = req.file; // get file from multer middleware;
     const { username, email, roles, status } = req.body;
     const user = await User.findById(req.params.id);
-    if (!user) {
-      const error = new Error("User not found!");
-      error.status = false;
-      error.statusCode = 400;
-      throw error;
-    }
     //  check new profile image
     if (file) {
       //check old profile image and delete
@@ -155,7 +148,7 @@ export const updateUser = async (req, res) => {
         const oldPath = path.join(process.cwd(), user.profile);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
-      user.profile = `/uploads/User/${file.filename}`;
+      user.profile = `/uploads/users/${file.filename}`;
     }
 
     user.username = username || user.username;

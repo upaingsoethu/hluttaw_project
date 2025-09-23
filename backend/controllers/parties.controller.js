@@ -29,17 +29,9 @@ export const partiesList = async (req, res) => {
 export const createParty = async (req, res) => {
   try {
     const file = req.file; //file from multer middleware
-    if (!file) {
-      const error = new Error("Party logo is required!");
-      error.status = false;
-      error.statusCode = 400;
-      throw error;
-    }
     const { name, shortName, description } = req.body;
-     await partyValidation(name, shortName ,file);
-    
-
-    const logoUrl = `/uploads/Party/${file.filename}`;
+    await partyValidation(name, shortName, file);
+    const logoUrl = `/uploads/parties/${file.filename}`;
     const newParty = await Party.create({
       name,
       shortName,
@@ -62,21 +54,14 @@ export const createParty = async (req, res) => {
 
 export const updateParty = async (req, res) => {
   try {
-    const file = req.file; // file from multer middleware
+    const file = req.file; 
     const { name, shortName, description } = req.body;
-    await mongoIdValidaton(req.params.id);
     const party = await Party.findById(req.params.id);
-    if (!party) {
-      const error = new Error("Party not found!");
-      error.status = false;
-      error.statusCode = 400;
-      throw error;
-    }
-
+    //file check and delete and renew file path
     if (file && party.logoUrl) {
       const oldLogo = path.join(process.cwd(), party.logoUrl);
       if (fs.existsSync(oldLogo)) fs.unlinkSync(oldLogo);
-      party.logoUrl = `/uploads/Party/${file.filename}`;
+      party.logoUrl = `/uploads/parties/${file.filename}`;
     }
 
     party.name = name || party.name;

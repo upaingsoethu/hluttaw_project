@@ -73,22 +73,13 @@ export const postsList = async (req, res) => {
 export const createPost = async (req, res) => {
   try {
     const files = req.files; //files from multer middleware
-    
     let { title, content, tags, hluttawId, committeeId } = req.body;
     //tags data check for array or string. String to array by split
     tags = tags ? (Array.isArray(tags) ? tags : tags.split(",")) : [];
     //check post validation
     await postValidation(title, content, tags, hluttawId, files);
-    //handle file upload for post images
-    if (!files || files.length === 0) {
-      const error = new Error("Please upload at least one image for the post!");
-      error.status = false;
-      error.statusCode = 400;
-      throw error;
-    }
     // create images path for database
-    const imageUrl = files.map((file) => `/uploads/News/${file.filename}`);
-
+    const imageUrl = files.map((file) => `/uploads/news/${file.filename}`);
     //create new post
     const newPost = new Post({
       title,

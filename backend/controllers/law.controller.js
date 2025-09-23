@@ -48,17 +48,10 @@ export const LawsList = async (req, res) => {
 export const createLaw = async (req, res) => {
   try {
     const file = req.file; //file get from multer middleware
-    //check upload pdf file
-    if (!file) {
-      const error = new Error("Law file is required!");
-      error.status = false;
-      error.statusCode = 404;
-      throw error;
-    }
     const { number, description, remark, hluttawId } = req.body;
     await lawValidation(number, description, remark, hluttawId, file);
-
-    const downloadUrl = `/uploads/Laws/${file.filename}`;
+    //new pdf file path for database
+    const downloadUrl = `/uploads/laws/${file.filename}`;
     const law = new Law({
       number,
       description,
@@ -94,24 +87,14 @@ export const createLaw = async (req, res) => {
 export const updateLaw = async (req, res) => {
   try {
     const file = req.file; // get from multer middleware
-
     const { number, description, remark, hluttawId } = req.body;
-
-    await mongoIdValidaton(req.params.id);
     const law = await Law.findById(req.params.id);
-    if (!law) {
-      const error = new Error("No laws data found!");
-      error.status = false;
-      error.statusCode = 404;
-      throw error;
-    }
     // Optional: delete old file if new uploaded
     if (file && law.downloadUrl) {
       const oldPath = path.join(process.cwd(), law.downloadUrl);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      law.downloadUrl = `/uploads/Laws/${file.filename}`;
+      law.downloadUrl = `/uploads/laws/${file.filename}`;
     }
-
     // Update other fields
     law.number = number || law.number;
     law.description = description || law.description;
@@ -134,8 +117,12 @@ export const updateLaw = async (req, res) => {
         updatedAt: moment(law.updatedAt).format("DD-MM-YY"),
       },
     });
-  } catch (err) {
-    res.status(400).json({ status: false, message: err.message });
+  } catch (error) {
+    if(error.statusCode){
+      throw error;
+    }
+     error.message = "Server Error in law update!";
+     throw error;
   }
 };
 
